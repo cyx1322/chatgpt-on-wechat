@@ -13,7 +13,9 @@ import requests
 from common import const
 import datetime, random
 import logging
-
+from gradio_client import Client
+import shutil  # 导入shutil模块用于文件操作
+logger = logging.getLogger(__name__)
 class OpenaiVoice(Voice):
     def __init__(self):
         openai.api_key = conf().get("open_ai_api_key")
@@ -31,34 +33,33 @@ class OpenaiVoice(Voice):
         finally:
             return reply
 
-    def textToVoice(self, text):
+   def textToVoice(self, text):
         try:
-            # 使用指定的 API
-            url = 'http://127.0.0.1:9880'
+            client = Client("http://localhost:9872/")
+            temp_file_name = "tmp/" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".wav"
+            logger.debug(f"[GRADIO] text_to_Voice temp_file_name={temp_file_name}, input={text}")
             
-            # 准备请求参数
-            params = {
-                'text': text,
-                'text_language': 'zh'
-            }
-            
-            # 发送 GET 请求（如果需要 POST 请求，可以相应地修改）
-            response = requests.get(url, params=params)
-            
-            # 生成文件名并保存语音文件，扩展名为 .wav
-            file_name = "tmp/" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".wav"
-            logging.debug(f"[CUSTOM API] text_to_Voice file_name={file_name}, input={text}")
-            
-            with open(file_name, 'wb') as f:
-                f.write(response.content)
-            
-            logging.info(f"[CUSTOM API] text_to_Voice success")
-            
-            # 模拟返回语音文件路径的回应对象（这里简化为直接返回文件名）
-            reply = file_name
+            result = client.predict(
+                "/Users/yixuanchen/Downloads/温迪/vo_SGEQ002_2_venti_09.wav",
+                "如果「采风」时看到的景色一模一样，要怎么想出独具特色的诗对呢？!",
+                text,  # 这是需要合成的文本
+                "中文",
+                "凑50字一切",
+                5,
+                1,
+                1,
+                False,    
+                fn_index=3  # 根据实际的函数索引进行调整
+            )
+
+            # 假设result是生成的音频文件的路径
+            generated_file_path = result  # 根据实际返回的内容调整变量名和值
+            # 将生成的文件移动到目标路径
+            shutil.move(generated_file_path, temp_file_name)
+
+            logger.info("[GRADIO] text_to_Voice success")
+            reply = temp_file_name  # 返回最终的文件路径
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
             reply = "遇到了一点小问题，请稍后再问我吧"
-        
         return reply
-    
