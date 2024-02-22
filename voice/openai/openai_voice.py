@@ -51,14 +51,14 @@ class OpenaiVoice(Voice):
             
             with open(file_name, 'wb') as f:
                 f.write(response.content)
+            
+            logging.info(f"[CUSTOM API] text_to_Voice success")
+            
+            # 模拟返回语音文件路径的回应对象（这里简化为直接返回文件名）
+            reply = file_name
+        except Exception as e:
+            logging.error(e)
+            reply = "遇到了一点小问题，请稍后再问我吧"
         
-        logging.info(f"[CUSTOM API] text_to_Voice success")
-        
-        # 模拟返回语音文件路径的回应对象（这里简化为直接返回文件名）
-        reply = file_name
-    except Exception as e:
-        logging.error(e)
-        reply = "遇到了一点小问题，请稍后再问我吧"
+        return reply
     
-    return reply
-
