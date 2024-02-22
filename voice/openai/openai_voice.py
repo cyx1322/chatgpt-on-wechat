@@ -12,6 +12,7 @@ from voice.voice import Voice
 import requests
 from common import const
 import datetime, random
+import logging
 
 class OpenaiVoice(Voice):
     def __init__(self):
@@ -30,28 +31,34 @@ class OpenaiVoice(Voice):
         finally:
             return reply
 
-
     def textToVoice(self, text):
         try:
-            api_base = conf().get("open_ai_api_base") or "https://api.openai.com/v1"
-            url = f'{api_base}/audio/speech'
-            headers = {
-                'Authorization': 'Bearer ' + conf().get("open_ai_api_key"),
-                'Content-Type': 'application/json'
+            # 使用指定的 API
+            url = 'http://127.0.0.1:9880'
+            
+            # 准备请求参数
+            params = {
+                'text': text,
+                'text_language': 'zh'
             }
-            data = {
-                'model': conf().get("text_to_voice_model") or const.TTS_1,
-                'input': text,
-                'voice': conf().get("tts_voice_id") or "alloy"
-            }
-            response = requests.post(url, headers=headers, json=data)
-            file_name = "tmp/" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".mp3"
-            logger.debug(f"[OPENAI] text_to_Voice file_name={file_name}, input={text}")
+            
+            # 发送 GET 请求（如果需要 POST 请求，可以相应地修改）
+            response = requests.get(url, params=params)
+            
+            # 生成文件名并保存语音文件，扩展名为 .wav
+            file_name = "tmp/" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".wav"
+            logging.debug(f"[CUSTOM API] text_to_Voice file_name={file_name}, input={text}")
+            
             with open(file_name, 'wb') as f:
                 f.write(response.content)
-            logger.info(f"[OPENAI] text_to_Voice success")
-            reply = Reply(ReplyType.VOICE, file_name)
-        except Exception as e:
-            logger.error(e)
-            reply = Reply(ReplyType.ERROR, "遇到了一点小问题，请稍后再问我吧")
-        return reply
+        
+        logging.info(f"[CUSTOM API] text_to_Voice success")
+        
+        # 模拟返回语音文件路径的回应对象（这里简化为直接返回文件名）
+        reply = file_name
+    except Exception as e:
+        logging.error(e)
+        reply = "遇到了一点小问题，请稍后再问我吧"
+    
+    return reply
+
